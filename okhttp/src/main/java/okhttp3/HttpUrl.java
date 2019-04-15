@@ -1418,6 +1418,40 @@ public final class HttpUrl {
         }
       }
 
+      /*
+       * add IPv6 interface scope to host when base host and new host are IPv6 link local addresses
+       * used mainly for correct redirection while using link local addresses
+       */
+      if(this.host != null){
+        if(base != null
+                && base.host.contains(":")
+                && (base.host.startsWith("fe80::") || base.host.startsWith("fe80::", 1))
+                && base.host.contains("%")
+                && host.contains(":")
+                && !host.contains("%")
+                && (host.startsWith("fe80::") || host.startsWith("fe80::", 1))
+        ){
+          int hostLength;
+          if(base.host.endsWith("]")){
+            hostLength = base.host.length() - 1;
+          } else {
+            hostLength = base.host.length();
+          }
+          String interfaceScope = base.host.substring(
+                  base.host.indexOf("%"),
+                  hostLength
+          );
+
+          String newHost;
+          if(host.endsWith("]")){
+            newHost = host.replace("]", interfaceScope + "]");
+          } else {
+            newHost = host + interfaceScope;
+          };
+          this.host = newHost;
+        }
+      }
+
       // Resolve the relative path.
       int pathDelimiterOffset = delimiterOffset(input, pos, limit, "?#");
       resolvePath(input, pos, pathDelimiterOffset);
